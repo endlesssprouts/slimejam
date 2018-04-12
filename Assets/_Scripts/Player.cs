@@ -4,7 +4,9 @@ public class Player : MonoBehaviour
 {
     private bool m_WalkingRight;
     private bool m_WalkingLeft;
-    private bool m_Jumping;
+    private bool m_Jumping; 
+    private Animator m_anim;
+    private Rigidbody2D m_rb2d;
 
     private const float BASE_JUMP_MULTIPLIER = 100f;
 
@@ -14,53 +16,79 @@ public class Player : MonoBehaviour
     [SerializeField]
     private float m_JumpForce;
 
-    private void Update()
+    [SerializeField]
+    private float m_MaxSpeed;
+
+    [HideInInspector] public bool jump = false;
+
+    void Awake()
+    {
+        m_anim = GetComponent<Animator>();
+        m_rb2d = GetComponent<Rigidbody2D>();
+    }
+
+    void Update()
+    {
+
+        if (Input.GetButtonDown("Jump"))
+        {
+            jump = true;
+        }
+    }
+
+    private void FixedUpdate()
     {
         //TODO smarter anim transition params and state variables for automatic animation selection
 
-        if(m_Jumping)
-            return;
+        //if(m_Jumping) // This should be done with a collider that is triggered when slime is in contact with ground
+        //    return;
 
-        if(!m_WalkingRight && Input.GetKeyDown(KeyCode.D))
+
+
+        float h = Input.GetAxis("Horizontal");
+
+        if (h * m_rb2d.velocity.x < m_MaxSpeed)
+            m_rb2d.AddForce(Vector2.right * h * m_Speed);
+
+        if (Mathf.Abs(m_rb2d.velocity.x) > m_MaxSpeed)
+            m_rb2d.velocity = new Vector2(Mathf.Sign(m_rb2d.velocity.x) * m_MaxSpeed, m_rb2d.velocity.y);
+
+        if (h > 0)
         {
             m_WalkingRight = true;
             m_WalkingLeft = false;
-            GetComponent<Animator>().SetBool("WalkLeft", false);
-            GetComponent<Animator>().SetBool("WalkRight", true);
-        }
-        else if(Input.GetKey(KeyCode.D))
-            transform.position += Vector3.right * Time.deltaTime * m_Speed;
+            m_anim.SetBool("WalkRight", true);
+            m_anim.SetBool("WalkLeft", false);
 
-        else if(!m_WalkingLeft && Input.GetKeyDown(KeyCode.A))
+        }
+        else if (h < 0)
         {
             m_WalkingLeft = true;
             m_WalkingRight = false;
-            GetComponent<Animator>().SetBool("WalkRight", false);
-            GetComponent<Animator>().SetBool("WalkLeft", true);
+            m_anim.SetBool("WalkLeft", true);
+            m_anim.SetBool("WalkRight", false);
         }
-        else if(Input.GetKey(KeyCode.A))
-            transform.position -= Vector3.right * Time.deltaTime * m_Speed;
         else
         {
             m_WalkingRight = false;
             m_WalkingLeft = false;
-            GetComponent<Animator>().SetBool("WalkRight", false);
-            GetComponent<Animator>().SetBool("WalkLeft", false);
+            m_anim.SetBool("WalkLeft", false);
+            m_anim.SetBool("WalkRight", false);
         }
 
-        if((m_WalkingRight || m_WalkingLeft) && Input.GetKeyDown(KeyCode.Space))
+        if (jump)
         {
-            Vector2 dir = Vector2.up + (m_WalkingRight ? Vector2.right : Vector2.left);
-            Vector2 force = dir * BASE_JUMP_MULTIPLIER * m_JumpForce;
-            GetComponent<Rigidbody2D>().AddForce(force);
-            GetComponent<Animator>().SetTrigger("Jump");
+            m_anim.SetTrigger("Jump");
+            m_rb2d.AddForce(new Vector2(0f, BASE_JUMP_MULTIPLIER * m_JumpForce));
+            jump = false;
             m_Jumping = true;
-            Invoke("JumpFalse", 1.5f);
+            //Invoke("JumpFalse", 1.5f);
         }
+
     }
 
-    private void JumpFalse()
-    {
-        m_Jumping = false;
-    }
+    //private void JumpFalse()
+    //{
+    //    m_Jumping = false;
+    //}
 }
