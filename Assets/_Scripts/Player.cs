@@ -31,15 +31,9 @@ public class Player : MonoBehaviour
 
     private void Update()
     {
-        if (Input.GetButtonDown("Jump"))
-        {
-            jump = true;
-        }
-
-        Vector2 pos = new Vector2(transform.position.x, transform.position.y - (m_Height / 2));
-        Vector2 groundedRay = new Vector2(0, -0.1f);
-        Debug.DrawRay(pos, groundedRay);
-        if(Physics2D.Raycast(pos, groundedRay).collider != null)
+        Vector2 groundedRay = new Vector2(0, -0.2f);
+        Debug.DrawRay(transform.position, groundedRay);
+        if(Physics2D.Raycast(transform.position, groundedRay).collider != null)
             jump = false;
     }
 
@@ -52,8 +46,9 @@ public class Player : MonoBehaviour
         else
             m_rb2d.velocity = new Vector2(0, m_rb2d.velocity.y);
 
-        if (jump)
+        if (!jump && Input.GetButtonDown("Jump"))
         {
+            jump = true;
             m_Anim.SetTrigger("Jump");
             m_rb2d.AddForce(new Vector2(0f, BASE_JUMP_MULTIPLIER * m_JumpForce));
         }
